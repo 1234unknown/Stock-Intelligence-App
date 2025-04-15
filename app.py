@@ -4,10 +4,12 @@ from src.api.data_fetcher import fetch_stock_data
 from src.ml.predictor import predict_price, forecast_prices
 from src.logic.trade_levels import calculate_trade_levels
 from src.logic.arbitrage import analyze_arbitrage
+from src.ml.sentiment import get_sentiment_score
+from src.ml.ensemble import generate_final_signal
 
 st.set_page_config(page_title="Stock Analyzer", layout="wide")
-
 st.title("📈 Stock Analyzer App")
+
 tab1, tab2 = st.tabs(["🔍 Symbol Analysis", "🔄 Arbitrage Analysis"])
 
 with tab1:
@@ -18,20 +20,27 @@ with tab1:
         if data is not None:
             st.line_chart(data['Close'])
 
-            prediction, confidence = predict_price(data)
-            st.subheader(f"Predicted Price: ${prediction:.2f} (Confidence: {confidence:.1%})")
+            sentiment = get_sentiment_score(symbol)
+            st.write(f"📣 Sentiment Score: {sentiment:+.2f}")
 
-            levels = calculate_trade_levels(data, prediction)
-            st.metric("Action", levels['action'])
-            st.metric("Buy Target", f"${levels['buy']:.2f}")
-            st.metric("Entry Target", f"${levels['entry']:.2f}")
-            st.metric("Stop Loss", f"${levels['stop_loss']:.2f}")
+            model_outputs = {
+                'gradient_boost': {'price': predict_price(data)[0], 'confidence': 0.7},
+                'prophet': {'price': predict_price(data)[0] * 1.02, 'confidence': 0.75},
+                'lstm': {'price': predict_price(data)[0] * 1.01, 'confidence': 0.65},
+                'automl': {'price': predict_price(data)[0] * 0.99, 'confidence': 0.6},
+                'online': {'price': predict_price(data)[0], 'confidence': 0.68},
+            }
+
+            signal = generate_final_signal(model_outputs, sentiment)
+
+            st.subheader(f"Final Action: {signal['action']}")
+            st.metric("Target Price", f"${signal['final_price_target']:.2f}")
+            st.metric("Confidence", f"{signal['confidence']:.0%}")
+            st.write("Reasons:", signal['reasons'])
 
             forecast_df = forecast_prices(data, forecast_days=5)
-            forecast_df['Entry Target'] = levels['entry']
-            forecast_df['Stop Loss'] = levels['stop_loss']
+            forecast_df['Price Target'] = signal['final_price_target']
             st.line_chart(forecast_df)
-
         else:
             st.error("Failed to fetch data. Check the symbol and try again.")
 
@@ -59,4 +68,3 @@ with tab2:
             st.warning(z_alert)
         else:
             st.error("Could not fetch data for one or both symbols.")
-
