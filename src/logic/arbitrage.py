@@ -16,4 +16,3 @@ def analyze_arbitrage(data1: pd.DataFrame, data2: pd.DataFrame) -> dict:
         'z_score': z_scores
     }
     return result
-
