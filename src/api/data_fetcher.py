@@ -11,4 +11,3 @@ def fetch_stock_data(symbol: str, period: str = "6mo", interval: str = "1d") -> 
     except Exception as e:
         print(f"Error fetching data for {symbol}: {e}")
         return None
-
