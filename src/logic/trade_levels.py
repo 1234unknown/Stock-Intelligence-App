@@ -17,4 +17,3 @@ def calculate_trade_levels(data: pd.DataFrame, predicted_price: float) -> dict:
         'entry': current_price,
         'stop_loss': current_price * 0.95
     }
-
