@@ -13,7 +13,6 @@ st.set_page_config(page_title="Stock Analyzer", layout="wide")
 st.title("📈 Stock Analyzer App")
 tab1, tab2 = st.tabs(["🔍 Symbol Analysis", "🔄 Arbitrage Analysis"])
 
-# ---------------- Symbol Analysis Tab ----------------
 with tab1:
     symbol = st.text_input("Enter Stock Symbol (e.g., AAPL, MSFT)", value="AAPL")
     forecast_choice = st.selectbox("Prediction Horizon", ["1 Day", "1 Week", "1 Month", "1 Year"])
@@ -51,7 +50,6 @@ with tab1:
             forecast_df['Price Target'] = signal['final_price_target']
             st.line_chart(forecast_df)
 
-            # 💰 Dividend Info (Predictive)
             dividend = get_dividend_forecast(symbol)
             if dividend:
                 st.success(f"💰 Predicted Yield: {dividend['yield']:.2f}%")
@@ -63,7 +61,6 @@ with tab1:
         else:
             st.error("Failed to fetch data. Check the symbol and try again.")
 
-# ---------------- Arbitrage Tab ----------------
 with tab2:
     st.subheader("Arbitrage Opportunity Finder")
     symbol1 = st.text_input("Symbol 1", value="AAPL")
