@@ -29,11 +29,11 @@ with tab1:
             st.write(f"📣 Sentiment Score: {sentiment:+.2f}")
 
             model_outputs = {
-                'gradient_boost': {'price': predict_price(data)[0], 'confidence': 0.7},
-                'prophet': {'price': predict_price(data)[0] * 1.02, 'confidence': 0.75},
-                'lstm': {'price': predict_price(data)[0] * 1.01, 'confidence': 0.65},
-                'automl': {'price': predict_price(data)[0] * 0.99, 'confidence': 0.6},
-                'online': {'price': predict_price(data)[0], 'confidence': 0.68},
+                'gradient_boost': {'price': predict_price(data, forecast_days)[0], 'confidence': 0.7},
+                'prophet': {'price': predict_price(data, forecast_days)[0] * 1.02, 'confidence': 0.75},
+                'lstm': {'price': predict_price(data, forecast_days)[0] * 1.01, 'confidence': 0.65},
+                'automl': {'price': predict_price(data, forecast_days)[0] * 0.99, 'confidence': 0.6},
+                'online': {'price': predict_price(data, forecast_days)[0], 'confidence': 0.68},
             }
 
             signal = generate_final_signal(model_outputs, sentiment)
@@ -51,11 +51,13 @@ with tab1:
             forecast_df['Price Target'] = signal['final_price_target']
             st.line_chart(forecast_df)
 
-            # 💰 Dividend Info
+            # 💰 Dividend Info (Predictive)
             dividend = get_dividend_forecast(symbol)
             if dividend:
-                st.success(f"💰 Estimated Annual Dividend Yield: {dividend['yield']:.2f}%")
-                st.write(f"📅 Next Ex-Dividend Date: {dividend['next_ex_date']}")
+                st.success(f"💰 Predicted Yield: {dividend['yield']:.2f}%")
+                st.write(f"📅 Last Ex-Dividend Date: {dividend['next_ex_date']}")
+                st.write(f"📈 Estimated Annual Payout: ${dividend['annual_dividend']:.2f}")
+                st.write(f"💵 Most Recent Dividend: ${dividend['recent_dividend']:.2f}")
             else:
                 st.info("No dividend information available for this symbol.")
         else:
