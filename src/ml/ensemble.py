@@ -26,4 +26,3 @@ def generate_final_signal(models_output: dict, sentiment: float) -> dict:
             f"Delta from base: ${delta:.2f}"
         ]
     }
-
