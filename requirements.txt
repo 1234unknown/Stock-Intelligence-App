@@ -7,3 +7,4 @@ scipy
 requests
 nltk
 plotly
+matplotlib
