@@ -14,12 +14,9 @@ def get_sentiment_score(symbol: str) -> float:
         response = requests.get(url)
         news = response.json()
         headlines = [item['headline'] for item in news[:10]]
-
         if not headlines:
             return 0.0
-
         scores = [analyzer.polarity_scores(h)['compound'] for h in headlines]
         return sum(scores) / len(scores)
     except:
         return 0.0
-
