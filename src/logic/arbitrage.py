@@ -10,9 +10,8 @@ def analyze_arbitrage(data1: pd.DataFrame, data2: pd.DataFrame) -> dict:
     corr = merged['Close_1'].corr(merged['Close_2'])
     z_scores = zscore(spread)
 
-    result = {
+    return {
         'spread': spread,
         'correlation': round(corr, 4),
         'z_score': z_scores
     }
-    return result
