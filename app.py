@@ -6,14 +6,19 @@ from src.logic.trade_levels import calculate_trade_levels
 from src.logic.arbitrage import analyze_arbitrage
 from src.ml.sentiment import get_sentiment_score
 from src.ml.ensemble import generate_final_signal
+from src.logic.dividends import get_dividend_forecast
 
 st.set_page_config(page_title="Stock Analyzer", layout="wide")
-st.title("📈 Stock Analyzer App")
 
+st.title("📈 Stock Analyzer App")
 tab1, tab2 = st.tabs(["🔍 Symbol Analysis", "🔄 Arbitrage Analysis"])
 
+# ---------------- Symbol Analysis Tab ----------------
 with tab1:
     symbol = st.text_input("Enter Stock Symbol (e.g., AAPL, MSFT)", value="AAPL")
+    forecast_choice = st.selectbox("Prediction Horizon", ["1 Day", "1 Week", "1 Month", "1 Year"])
+    forecast_map = {"1 Day": 1, "1 Week": 5, "1 Month": 22, "1 Year": 252}
+    forecast_days = forecast_map[forecast_choice]
 
     if symbol:
         data = fetch_stock_data(symbol)
@@ -32,18 +37,31 @@ with tab1:
             }
 
             signal = generate_final_signal(model_outputs, sentiment)
+            levels = calculate_trade_levels(data, signal['final_price_target'])
 
             st.subheader(f"Final Action: {signal['action']}")
             st.metric("Target Price", f"${signal['final_price_target']:.2f}")
             st.metric("Confidence", f"{signal['confidence']:.0%}")
+            st.metric("Buy Target", f"${levels['buy']:.2f}")
+            st.metric("Entry Price", f"${levels['entry']:.2f}")
+            st.metric("Stop Loss", f"${levels['stop_loss']:.2f}")
             st.write("Reasons:", signal['reasons'])
 
-            forecast_df = forecast_prices(data, forecast_days=5)
+            forecast_df = forecast_prices(data, forecast_days=forecast_days)
             forecast_df['Price Target'] = signal['final_price_target']
             st.line_chart(forecast_df)
+
+            # 💰 Dividend Info
+            dividend = get_dividend_forecast(symbol)
+            if dividend:
+                st.success(f"💰 Estimated Annual Dividend Yield: {dividend['yield']:.2f}%")
+                st.write(f"📅 Next Ex-Dividend Date: {dividend['next_ex_date']}")
+            else:
+                st.info("No dividend information available for this symbol.")
         else:
             st.error("Failed to fetch data. Check the symbol and try again.")
 
+# ---------------- Arbitrage Tab ----------------
 with tab2:
     st.subheader("Arbitrage Opportunity Finder")
     symbol1 = st.text_input("Symbol 1", value="AAPL")
