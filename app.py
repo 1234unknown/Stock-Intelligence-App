@@ -3,6 +3,10 @@ import pandas as pd
 from datetime import datetime, timedelta
 import yfinance as yf
 import matplotlib.pyplot as plt
+import sys
+import os
+sys.path.append(os.path.abspath("src"))
+
 
 from src.api.data_fetcher import fetch_stock_data
 from src.ml.predictor import (
