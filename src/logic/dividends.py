@@ -1,14 +1,15 @@
 import yfinance as yf
-import pandas as pd
-from datetime import datetime
 
 def get_dividend_forecast(symbol: str) -> dict:
     try:
         ticker = yf.Ticker(symbol)
-        hist_div = ticker.dividends
+        info = ticker.info
         current_price = ticker.history(period="1d")['Close'].iloc[-1]
+        if 'dividendYield' not in info or not info['dividendYield'] or current_price == 0:
+            return None
 
-        if hist_div.empty or current_price == 0:
+        hist_div = ticker.dividends
+        if hist_div.empty:
             return None
 
         monthly_div = hist_div.resample('M').sum().fillna(0)
@@ -25,6 +26,5 @@ def get_dividend_forecast(symbol: str) -> dict:
             'annual_dividend': round(annual_div_estimate, 2),
             'recent_dividend': round(last_payout, 2)
         }
-    except Exception as e:
-        print(f"Dividend error for {symbol}: {e}")
+    except:
         return None
