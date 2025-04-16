@@ -26,15 +26,27 @@ st.title("📈 Stock Analyzer App")
 tab1, tab2, tab3 = st.tabs(["🔍 Symbol Analysis", "🔄 Arbitrage Analysis", "🧠 Options Scanner"])
 
 
+# ✅ FIXED: Expiration filtering for option trades
 def suggest_option_trade(symbol, current_price, predicted_price, forecast_days):
     try:
         ticker = yf.Ticker(symbol)
-        expiry_dates = ticker.options
+
+        # Filter out past expiration dates
+        today = datetime.now().date()
+        future_date = today + timedelta(days=forecast_days)
+        expiry_dates = [
+            d for d in ticker.options
+            if datetime.strptime(d, "%Y-%m-%d").date() > today
+        ]
+
         if not expiry_dates:
             return None
 
-        today = datetime.now().date()
-        expiry = next((d for d in expiry_dates if datetime.strptime(d, "%Y-%m-%d").date() > today + timedelta(days=forecast_days)), expiry_dates[0])
+        expiry = next(
+            (d for d in expiry_dates if datetime.strptime(d, "%Y-%m-%d").date() >= future_date),
+            expiry_dates[-1]
+        )
+
         option_chain = ticker.option_chain(expiry)
 
         option_type = "CALL" if predicted_price > current_price else "PUT"
