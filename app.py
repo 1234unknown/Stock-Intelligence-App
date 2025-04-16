@@ -12,8 +12,7 @@ from src.api.data_fetcher import fetch_stock_data
 from src.ml.predictor import (
     predict_price, forecast_prices,
     create_forecast_chart, get_analyst_rating,
-    adjust_levels_for_risk, show_predicted_dividend,
-    scan_short_term_trades
+    adjust_levels_for_risk, show_predicted_dividend
 )
 from src.logic.trade_levels import calculate_trade_levels
 from src.logic.arbitrage import analyze_arbitrage
@@ -27,7 +26,6 @@ st.title("📈 Stock Analyzer App")
 tab1, tab2, tab3 = st.tabs(["🔍 Symbol Analysis", "🔄 Arbitrage Analysis", "🧠 Options Scanner"])
 
 
-# ---------------------- Option Suggestion Logic ----------------------
 def suggest_option_trade(symbol, current_price, predicted_price, forecast_days):
     try:
         ticker = yf.Ticker(symbol)
