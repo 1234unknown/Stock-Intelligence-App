@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
 from src.api.data_fetcher import fetch_stock_data
-from src.ml.predictor import predict_price, forecast_prices
+from src.ml.predictor import (
+    predict_price, forecast_prices,
+    create_forecast_chart, get_analyst_rating,
+    adjust_levels_for_risk, show_predicted_dividend
+)
 from src.logic.trade_levels import calculate_trade_levels
 from src.logic.arbitrage import analyze_arbitrage
 from src.ml.sentiment import get_sentiment_score
@@ -18,6 +22,7 @@ with tab1:
     forecast_choice = st.selectbox("Prediction Horizon", ["1 Day", "1 Week", "1 Month", "1 Year"])
     forecast_map = {"1 Day": 1, "1 Week": 5, "1 Month": 22, "1 Year": 252}
     forecast_days = forecast_map[forecast_choice]
+    risk_level = st.slider("Select Risk Level (1 = Low, 10 = High)", 1, 10, 5)
 
     if symbol:
         data = fetch_stock_data(symbol)
@@ -35,8 +40,12 @@ with tab1:
                 'online': {'price': predict_price(data, forecast_days)[0], 'confidence': 0.68},
             }
 
+            analyst_rating = get_analyst_rating(symbol)
+            st.write(f"📊 Analyst Rating: {analyst_rating}")
+
             signal = generate_final_signal(model_outputs, sentiment)
-            levels = calculate_trade_levels(data, signal['final_price_target'])
+            raw_levels = calculate_trade_levels(data, signal['final_price_target'])
+            levels = adjust_levels_for_risk(raw_levels, risk_level)
 
             st.subheader(f"Final Action: {signal['action']}")
             st.metric("Target Price", f"${signal['final_price_target']:.2f}")
@@ -48,16 +57,22 @@ with tab1:
 
             forecast_df = forecast_prices(data, forecast_days=forecast_days)
             forecast_df['Price Target'] = signal['final_price_target']
-            st.line_chart(forecast_df)
+
+            fig = create_forecast_chart(data, forecast_df, entry=levels['entry'], stop=levels['stop_loss'], target=signal['final_price_target'])
+            st.plotly_chart(fig, use_container_width=True)
 
             dividend = get_dividend_forecast(symbol)
             if dividend:
-                st.success(f"💰 Predicted Yield: {dividend['yield']:.2f}%")
+                st.success(f"💰 Estimated Annual Dividend Yield: {dividend['yield']:.2f}%")
                 st.write(f"📅 Last Ex-Dividend Date: {dividend['next_ex_date']}")
                 st.write(f"📈 Estimated Annual Payout: ${dividend['annual_dividend']:.2f}")
                 st.write(f"💵 Most Recent Dividend: ${dividend['recent_dividend']:.2f}")
             else:
                 st.info("No dividend information available for this symbol.")
+
+            # Show predicted dividend
+            show_predicted_dividend(symbol)
+
         else:
             st.error("Failed to fetch data. Check the symbol and try again.")
 
